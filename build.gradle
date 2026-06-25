@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.gradle.userdev' version '7.0.80'
+}
+
+group = 'com.raxxo310'
+version = '1.0.0'
+archivesBaseName = 'basicmod'
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+minecraft {
+    version = '1.21.1'
+    runs {
+        client {
+            workingDirectory project.file('run')
+        }
+        server {
+            workingDirectory project.file('run')
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.neoforged.net/releases' }
+}
+
+dependencies {
+    implementation 'net.neoforged:neoforge:1.21.1-21.0.19-beta'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

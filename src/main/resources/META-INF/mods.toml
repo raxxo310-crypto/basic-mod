@@ -1,0 +1,10 @@
+modLoader="neoforged"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="basicmod"
+version="1.0.0"
+displayName="Basic Mod"
+description='''A basic NeoForge mod for Minecraft 1.21.1'''
+authors="raxxo310"
