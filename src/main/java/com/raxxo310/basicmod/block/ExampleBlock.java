@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -14,9 +15,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.phys.BlockHitResult;
 
 public class ExampleBlock extends BaseEntityBlock {
     public ExampleBlock(BlockBehaviour.Properties properties) {
@@ -36,6 +36,22 @@ public class ExampleBlock extends BaseEntityBlock {
             }
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
+    }
+
+    @Override
+    public void attack(BlockState state, Level world, BlockPos pos, Player player) {
+        if (!world.isClientSide && world instanceof ServerLevel server) {
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof ExampleBlockEntity example) {
+                // Use the player's attack damage attribute, which includes weapon modifiers
+                double attackDamage = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+                int damageAmount = Math.max(1, (int) Math.round(attackDamage));
+                example.damage(damageAmount, server, pos);
+                player.sendMessage(Component.literal("You hit the block for " + damageAmount + " damage. Health: " + example.getHealth()), player.getUUID());
+                BasicMod.LOGGER.info("Player {} attacked example block at {} for {} damage (health={})", player.getDisplayName().getString(), pos, damageAmount, example.getHealth());
+            }
+        }
+        super.attack(state, world, pos, player);
     }
 
     @Override
