@@ -2,6 +2,7 @@ package com.raxxo310.basicmod.block;
 
 import com.raxxo310.basicmod.BasicMod;
 import com.raxxo310.basicmod.block.entity.ExampleBlockEntity;
+import com.raxxo310.basicmod.block.screen.ExampleBlockConfigScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -28,7 +29,18 @@ public class ExampleBlock extends BaseEntityBlock {
         if (!world.isClientSide) {
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof ExampleBlockEntity example) {
-                // Check if player is on a different team
+                // Check if player is in spectator mode and is OP
+                if (player.isSpectator() && player.hasPermissions(2)) {
+                    // Open configuration GUI on client side
+                    if (world.isClientSide || player.connection == null) {
+                        return InteractionResult.SUCCESS;
+                    }
+                    // Send packet to client to open GUI
+                    player.displayClientMessage(Component.literal("Opening configuration screen..."), true);
+                    return InteractionResult.SUCCESS;
+                }
+                
+                // Normal damage behavior for non-spectator players
                 if (canDamageBlock(player, example)) {
                     example.damage(1, (ServerLevel) world, pos);
                     player.sendMessage(Component.literal("Example Block health: " + example.getHealth()), false);
@@ -39,6 +51,14 @@ public class ExampleBlock extends BaseEntityBlock {
                 }
             } else {
                 player.sendMessage(Component.literal("This block has no health data."), false);
+            }
+        } else if (world.isClientSide && player.isSpectator() && player.hasPermissions(2)) {
+            // Client-side: Open GUI for spectator OP
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof ExampleBlockEntity example) {
+                net.neoforged.api.distmarker.Dist.CLIENT.isPresent();
+                openConfigScreen(example, pos);
+                return InteractionResult.SUCCESS;
             }
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
@@ -85,6 +105,14 @@ public class ExampleBlock extends BaseEntityBlock {
         
         // Only allow damage if player is on a different team
         return !blockTeam.equals(playerTeam);
+    }
+
+    @SuppressWarnings("unused")
+    private static void openConfigScreen(ExampleBlockEntity blockEntity, BlockPos pos) {
+        // This method is called on client side only
+        if (net.neoforged.api.distmarker.Dist.CLIENT.isPresent()) {
+            net.minecraft.client.Minecraft.getInstance().setScreen(new ExampleBlockConfigScreen(blockEntity, pos));
+        }
     }
 
     @Override
