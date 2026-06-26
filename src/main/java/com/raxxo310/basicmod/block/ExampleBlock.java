@@ -28,11 +28,17 @@ public class ExampleBlock extends BaseEntityBlock {
         if (!world.isClientSide) {
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof ExampleBlockEntity example) {
-                example.damage(1, (ServerLevel) world, pos);
-                player.sendMessage(Component.literal("Example Block health: " + example.getHealth()), player.getUUID());
-                BasicMod.LOGGER.info("Player {} damaged example block at {} (health={})", player.getDisplayName().getString(), pos, example.getHealth());
+                // Check if player is on a different team
+                if (canDamageBlock(player, example)) {
+                    example.damage(1, (ServerLevel) world, pos);
+                    player.sendMessage(Component.literal("Example Block health: " + example.getHealth()), false);
+                    BasicMod.LOGGER.info("Player {} damaged example block at {} (health={})", player.getDisplayName().getString(), pos, example.getHealth());
+                } else {
+                    player.sendMessage(Component.literal("You cannot damage your own team's block!"), false);
+                    BasicMod.LOGGER.info("Player {} attempted to damage their own team's block at {}", player.getDisplayName().getString(), pos);
+                }
             } else {
-                player.sendMessage(Component.literal("This block has no health data."), player.getUUID());
+                player.sendMessage(Component.literal("This block has no health data."), false);
             }
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
@@ -43,15 +49,42 @@ public class ExampleBlock extends BaseEntityBlock {
         if (!world.isClientSide && world instanceof ServerLevel server) {
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof ExampleBlockEntity example) {
-                // Use the player's attack damage attribute, which includes weapon modifiers
-                double attackDamage = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-                int damageAmount = Math.max(1, (int) Math.round(attackDamage));
-                example.damage(damageAmount, server, pos);
-                player.sendMessage(Component.literal("You hit the block for " + damageAmount + " damage. Health: " + example.getHealth()), player.getUUID());
-                BasicMod.LOGGER.info("Player {} attacked example block at {} for {} damage (health={})", player.getDisplayName().getString(), pos, damageAmount, example.getHealth());
+                // Check if player is on a different team
+                if (canDamageBlock(player, example)) {
+                    // Use the player's attack damage attribute, which includes weapon modifiers
+                    double attackDamage = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+                    int damageAmount = Math.max(1, (int) Math.round(attackDamage));
+                    example.damage(damageAmount, server, pos);
+                    player.sendMessage(Component.literal("You hit the block for " + damageAmount + " damage. Health: " + example.getHealth()), false);
+                    BasicMod.LOGGER.info("Player {} attacked example block at {} for {} damage (health={})", player.getDisplayName().getString(), pos, damageAmount, example.getHealth());
+                } else {
+                    player.sendMessage(Component.literal("You cannot damage your own team's block!"), false);
+                    BasicMod.LOGGER.info("Player {} attempted to attack their own team's block at {}", player.getDisplayName().getString(), pos);
+                }
             }
         }
         super.attack(state, world, pos, player);
+    }
+
+    /**
+     * Check if a player can damage this block
+     * A player can only damage the block if they are on a different team than the block's owner
+     * 
+     * @param player The player attempting to damage the block
+     * @param blockEntity The block entity to check team ownership
+     * @return true if the player can damage the block, false if they own it or are on the same team
+     */
+    private boolean canDamageBlock(Player player, ExampleBlockEntity blockEntity) {
+        String blockTeam = blockEntity.getTeam();
+        String playerTeam = player.getTeam() != null ? player.getTeam().getName() : "none";
+        
+        // If block has no team assigned, allow damage
+        if (blockTeam == null || blockTeam.isEmpty()) {
+            return true;
+        }
+        
+        // Only allow damage if player is on a different team
+        return !blockTeam.equals(playerTeam);
     }
 
     @Override
