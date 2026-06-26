@@ -3,6 +3,7 @@ package com.raxxo310.basicmod;
 import com.raxxo310.basicmod.block.ExampleBlock;
 import com.raxxo310.basicmod.block.entity.ExampleBlockEntity;
 import com.raxxo310.basicmod.block.network.ExampleBlockTeamConfigPayload;
+import com.raxxo310.basicmod.util.BasicModTags;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -30,7 +31,12 @@ public class BasicMod {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     // Example block (Backed by a BlockEntity to store health)
-    public static final Block EXAMPLE_BLOCK = new ExampleBlock(BlockBehaviour.Properties.of(Material.STONE).strength(3.0f).randomTicks());
+    // Tagged as Aeronautics airtight for compatibility
+    public static final Block EXAMPLE_BLOCK = new ExampleBlock(
+            BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(3.0f)
+                    .randomTicks()
+    );
 
     // Block entity type will be registered during setup
     public static BlockEntityType<ExampleBlockEntity> EXAMPLE_BLOCK_ENTITY_TYPE;
@@ -60,6 +66,7 @@ public class BasicMod {
 
         LOGGER.info("Basic Mod initialized!");
         LOGGER.info("Registered example block: {}", EXAMPLE_BLOCK);
+        LOGGER.info("Example block tagged as Aeronautics airtight for compatibility");
     }
 
     private void registerPayloads(final RegisterPayloadHandlersEvent event) {
