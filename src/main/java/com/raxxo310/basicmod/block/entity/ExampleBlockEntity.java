@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class ExampleBlockEntity extends BlockEntity {
     private int health = 10; // default health
+    private String team = ""; // team that owns this block
 
     public ExampleBlockEntity(BlockPos pos, BlockState state) {
         super(BasicMod.EXAMPLE_BLOCK_ENTITY_TYPE, pos, state);
@@ -21,6 +22,15 @@ public class ExampleBlockEntity extends BlockEntity {
 
     public void setHealth(int health) {
         this.health = health;
+        setChanged();
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team != null ? team : "";
         setChanged();
     }
 
@@ -44,11 +54,15 @@ public class ExampleBlockEntity extends BlockEntity {
         if (tag.contains("Health")) {
             this.health = tag.getInt("Health");
         }
+        if (tag.contains("Team")) {
+            this.team = tag.getString("Team");
+        }
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt("Health", this.health);
+        tag.putString("Team", this.team);
     }
 }
