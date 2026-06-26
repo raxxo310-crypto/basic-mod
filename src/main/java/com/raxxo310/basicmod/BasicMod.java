@@ -2,12 +2,15 @@ package com.raxxo310.basicmod;
 
 import com.raxxo310.basicmod.block.ExampleBlock;
 import com.raxxo310.basicmod.block.entity.ExampleBlockEntity;
+import com.raxxo310.basicmod.block.network.ExampleBlockTeamConfigPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistration;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -17,6 +20,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.network.SimpleChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +35,17 @@ public class BasicMod {
     // Block entity type will be registered during setup
     public static BlockEntityType<ExampleBlockEntity> EXAMPLE_BLOCK_ENTITY_TYPE;
 
+    // Network channel for team config packets
+    public static final SimpleChannel TEAM_CONFIG_PACKET = net.neoforged.neoforge.network.NetworkHooks.createPlayChannel(
+            new ResourceLocation(MOD_ID, "team_config"),
+            () -> "1.0",
+            s -> true,
+            s -> true
+    );
+
     public BasicMod(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::registerPayloads);
         NeoForge.EVENT_BUS.register(this);
     }
 
@@ -47,5 +60,13 @@ public class BasicMod {
 
         LOGGER.info("Basic Mod initialized!");
         LOGGER.info("Registered example block: {}", EXAMPLE_BLOCK);
+    }
+
+    private void registerPayloads(final RegisterPayloadHandlersEvent event) {
+        var registrations = event.registrar(MOD_ID);
+        registrations.playToServer(
+                ExampleBlockTeamConfigPayload.CODEC,
+                ExampleBlockTeamConfigPayload::handleData
+        );
     }
 }
